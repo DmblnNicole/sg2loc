@@ -1,0 +1,98 @@
+# From https://github.com/y9miao/VLSG.
+# SceneGraphLoc backbone config, only the keys the SG2Loc evaluation pipeline reads.
+# SG2Loc parameters live in sg2loc.yaml.
+data :
+  root_dir        : '' # resolved from data_root_dir in paths.yaml
+  rescan: False
+  temporal: True
+  resplit: True
+  img:
+    img_step: 1
+    w: 960
+    h: 540
+  img_encoding:
+    resize_w: 1024 # resize image for backbone GCVit
+    resize_h: 576
+    img_rotate: True # rotate w,h for backbone GCVit
+    patch_w: 16 # number of patches in width
+    patch_h: 9
+    record_feature: False
+    use_feature: True # use precomputed features
+    preload_feature: True
+    feature_dir: "Features2D/DinoV2_16_9_scan" # relative to data_root_dir/files
+  cross_scene:
+    use_cross_scene: True
+    num_scenes: 0 # number of scenes (+1 for 1 target scene)
+    num_negative_samples: -1
+  scene_graph:
+    obj_img_patch: "Features3D/obj_dinov2_top10_l3"
+    obj_topk: 10
+    obj_patch_num: 100
+
+# scene graph embedding (SceneGraphLoc encoder)
+sgaligner:
+  use_pretrained : False
+  pretrained: ""
+  model_name    : 'sgaligner'
+  modules       : ['point', 'gat', 'rel', 'attr', 'img_patch']
+  use_predicted : False
+  scan_type     : 'scan'
+  use_pos_enc: True
+
+  model :
+    rel_dim             : 41
+    attr_dim            : 164
+    img_patch_feat_dim  : 1536
+    img_emb_dim: 256
+    multi_view_aggregator: 'transformer'
+  train :
+    pc_res: 512
+  val :
+    pc_res: 512
+    data_mode: orig
+
+# 2D-3D object match model
+model:
+  backbone:
+    # resolved relative to the sg2loc package. Unused at run time (precomputed features).
+    cfg_file: "./models/GCVit/configs/gcvit/cascade_mask_rcnn_gcvit_tiny_3x_coco.py"
+    pretrained: "./checkpoint/GCVit/gcvit_1k_tiny.pth.tar"
+    num_reduce: 0
+    backbone_dim: 1536 # dim of DinoV2 features
+  patch:
+    hidden_dims: [512] # last is the out dim
+    encoder_dim: 400
+    gcn_layers: 2
+  obj:
+    embedding_dim: 656 # fixed
+    embedding_hidden_dims: [512, 512]
+    encoder_dim: 400
+  other:
+    drop: 0.1
+
+output_dir: "" # resolved from runs_dir in paths.yaml
+mode: "eval"
+# train-section keys the dataset and model constructors read
+train:
+  loss:
+    use_temporal: True
+  data_aug:
+    use_aug: True
+    img:
+      rotation: 60.0
+      horizontal_flip: 0.5
+      vertical_flip: 0.5
+      color: 0.3
+    use_aug_3D: True
+    pcs:
+      granularity: [0.05, 0.2, 0.4]
+      magnitude: [0.2, 0.4, 0.4]
+val:
+  num_workers: 0
+  room_retrieval:
+    epsilon_th: 0.8
+    method_name: ""
+other:
+  use_resume: True
+  resume: "pretrained.pth.tar" # relative to resume_dir in paths.yaml
+seed: 42

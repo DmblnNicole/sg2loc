@@ -1,0 +1,63 @@
+# SG2Loc method config (overlaid on val.yaml, the inherited SceneGraphLoc backbone).
+
+particle_filter:
+  sequence_length: 10  # frames per query sequence (drives the eval dataloader batch size)
+  scans_scenes_dir: "scans"  # relative to data_root_dir (paths.yaml)
+  first_reinit_translation_halfwidth: 0.8   # uniform box half-size (m) around the pass-1 MLE pose
+  first_reinit_rotation_std: 0.2            # noise std (rad, ~11 deg)
+  second_reinit_translation_halfwidth: 0.4  # uniform box half-size (m) around the pass-2 MLE pose
+  second_reinit_rotation_std: 0.1           # noise std (rad, ~6 deg)
+  # top-K multi-mode reinit between passes (1 = single-MLE reinit)
+  reinit_num_modes: 8
+  reinit_mode_separation: 0.75      # min translation (m) between distinct modes
+  reinit_mode_yaw_separation: 0.785 # min yaw difference (rad, ~45 deg) between distinct modes
+  num_passes: 3                     # coarse-to-fine passes (2 skips the final pass)
+  # kld resampling
+  min_particles: 500
+  max_particles: 10000
+  resample_random_count: 2000    # fresh global particles appended to the resampled set per injection
+  resample_random_every: 5       # inject only at every Nth frame update (1 = every resampling)
+  epsilon: 0.1 # max allowed error between "true" and our sampled distribution
+  resolutions: [0.2, 0.2, 0.2, 0.2] # x,y,z,yaw
+  upper_quantile: 1.96 # 95% confidence in normal distribution
+  sampling:
+    grid_resolution: 0.1  # grid cell size (m) on the floor plane
+    heights: [1.50, 1.60, 1.70, 1.80]  # camera heights (m above floor) sampled per grid cell
+    samples_per_cell: 4                # random translations drawn per grid cell
+    roll_min: -3.14159  # initial roll range (rad) around the gravity axis, full circle
+    roll_max: 3.14159
+  transition_model:
+    translation_noise_mean: 0
+    translation_noise_stddev: 0.05
+    rotation_noise_mean: 0
+    rotation_noise_stddev: 0.05 # rad, ~3 deg
+  observation_model:
+    sim_noise_stddev: 0.6 # observation noise std.
+    depth_error_cap_m: 0.5   # per-pixel depth error clamped to +/- this before scoring
+    score_max_per_term: 2.0  # each observation term (semantic, depth, RGB) maps to [0, this]
+    # coarse-to-fine ray strides per pass. Smaller = denser rays = slower.
+    first_stride: 20
+    second_stride: 12
+    third_stride: 20
+    max_leaf_count: 50 # BVH leaves recorded per ray during traversal
+    threads_per_block: 1024 # CUDA threads per block for the raycast kernels
+    # Particle batch sizes per pass, tuned for a ~12 GB GPU (peak ~8 GB). Lower them for
+    # smaller GPUs, raise them for larger ones.
+    first_pose_batch_size: 6000  # stride 20
+    second_pose_batch_size: 2400 # stride 12
+    third_pose_batch_size: 6000  # stride 20
+  preprocess:
+    output_dir: "files/bvh_trees"  # relative to data_root_dir (paths.yaml)
+    max_triangles_per_leaf: 8  # BVH build: recursion stops once a leaf has <= this many triangles
+    embeddings_dir: "files/obj_embeddings"  # precomputed per-scene object embeddings, relative to data_root_dir (paths.yaml)
+
+# pose refinement hyperparameters
+refinement:
+  min_angle: -45        # min roll angle (deg) for rendered hypothesis views around the leveled camera x-axis
+  max_angle: 45         # max roll angle (deg)
+  num_imgs: 2           # number of rendered hypothesis views per frame (besides the MLE view)
+  roma_setting: fast  # RoMaV2 preset, passed through (512px coarse, ~3.7 GB GPU)
+  match_certainty: 0.15
+  roma_topk: 1500       # number of top RoMa matches sampled per image pair
+  max_reproj_error: 16.0  # PnP RANSAC inlier reprojection threshold (px)
+  pnp_thresh: 1500      # min inliers to accept the refined pose over the coarse one

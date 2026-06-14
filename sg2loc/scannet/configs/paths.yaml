@@ -1,0 +1,7 @@
+# Machine-specific paths for the ScanNet pipeline (see ../../scan3r/configs/paths.yaml for
+# the 3RScan ones). The Data_ROOT_DIR, RESUME_DIR and ROOM_RETRIEVAL_OUT_DIR environment
+# variables override these values. Relative values resolve against the repo root.
+
+data_root_dir: data/scannet      # scans/, files/{bvh_trees, features_2D, Features3D, gt_patch_anno, scans_test.pkl}
+resume_dir: checkpoints           # holds the ScanNet checkpoint (epoch-31.pth.tar)
+runs_dir: results/scannet         # run outputs (<runs_dir>/<timestamp>/filter/, refine_<timestamp>/)

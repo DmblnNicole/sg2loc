@@ -1,0 +1,26 @@
+# SG2Loc requirements: preprocessing, particle filter and refinement
+# (python 3.10, torch 2.12 + CUDA 12.9).
+numpy==2.2.6
+scipy==1.15.3
+poselib==2.0.5
+opencv-python==4.13.0.92
+albumentations==2.0.8
+pandas==2.3.3
+Pillow==12.2.0
+plyfile==1.1.4
+pyyaml==6.0.3
+yacs==0.1.8
+einops==0.8.2
+tqdm==4.68.3
+numba==0.65.1
+numba-cuda==0.30.3
+nvidia-cuda-nvcc-cu12==12.9.86
+nvidia-nvjitlink-cu12==12.9.86
+# particle-filter additions
+torch_geometric==2.8.0.post1
+open3d
+trimesh
+torchsummary==1.5.1
+imageio
+pypng
+matplotlib

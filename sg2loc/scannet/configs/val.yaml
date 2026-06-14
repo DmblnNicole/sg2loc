@@ -1,0 +1,80 @@
+# SceneGraphLoc backbone config for ScanNet, only the keys the SG2Loc evaluation pipeline reads.
+# SG2Loc parameters live in sg2loc.yaml.
+
+data:
+  root_dir: '' # resolved from data_root_dir in paths.yaml
+  img:
+    img_step: 24
+    w: 648
+    h: 484
+  img_encoding:
+    img_rotate: False
+    patch_w: 32 # number of patches in width
+    patch_h: 24
+    use_feature: True # use precomputed features
+    feature_dir: "features_2D/dinov2_24_32_s24" # relative to data_root_dir/files
+  gt_patch: "gt_patch_anno/patch_anno_24_32_s24" # relative to data_root_dir/files
+  gt_patch_th: 0.7 # keep frames whose fraction of labeled patches exceeds this
+  cross_scene:
+    use_cross_scene: True
+    num_scenes: 0 # number of distractor scenes (+1 for the target scene)
+    num_negative_samples: -1
+  scene_graph:
+    obj_img_patch: "Features3D/obj_dinov2_top10_l3"
+    obj_topk: 10
+    obj_patch_num: 100
+
+# scene graph embedding (SceneGraphLoc encoder)
+sgaligner:
+  use_pretrained: False
+  pretrained: ""
+  model_name: 'sgaligner'
+  modules: ['point', 'gat', 'rel', 'img_patch'] # no attr module for predicted scene graphs
+  use_predicted: True
+  scan_type: 'scan'
+  use_pos_enc: False
+
+  model:
+    rel_dim: 9
+    attr_dim: 164
+    img_patch_feat_dim: 1536
+    img_emb_dim: 256
+    multi_view_aggregator: 'max'
+  val:
+    pc_res: 512
+    data_mode: orig
+
+# 2D-3D object match model
+model:
+  backbone:
+    # resolved relative to the sg2loc package. Unused at run time (precomputed features).
+    cfg_file: "./models/GCVit/configs/gcvit/cascade_mask_rcnn_gcvit_tiny_3x_coco.py"
+    pretrained: "./checkpoint/GCVit/gcvit_1k_tiny.pth.tar"
+    num_reduce: 0
+    backbone_dim: 1536 # dim of DinoV2 features
+  patch:
+    hidden_dims: [512, 512, 512] # last is the out dim
+    encoder_dim: 400
+    gcn_layers: 0
+  obj:
+    embedding_dim: 556 # fixed
+    embedding_hidden_dims: [512, 512]
+    encoder_dim: 400
+  other:
+    drop: 0.0
+
+output_dir: "" # resolved from runs_dir in paths.yaml
+mode: "eval"
+# train-section keys the model constructor reads
+train:
+  loss:
+    use_temporal: False
+val:
+  num_workers: 0
+  room_retrieval:
+    epsilon_th: 0.8
+    method_name: ""
+other:
+  use_resume: True
+  resume: "epoch-31.pth.tar" # relative to resume_dir in paths.yaml
+seed: 42

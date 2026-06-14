@@ -1,0 +1,8 @@
+# Machine-specific paths for the 3RScan pipeline. Set data_root_dir for your machine and the
+# entry points run without any environment variables. Relative values resolve against the
+# repo root. When set, the Data_ROOT_DIR, RESUME_DIR and ROOM_RETRIEVAL_OUT_DIR environment
+# variables override these values.
+
+data_root_dir: data/3rscan       # scenes/, files/3RScan.json, files/bvh_trees_0.5/, Features2D/3D
+resume_dir: checkpoints          # holds the SceneGraphLoc checkpoint (pretrained.pth.tar)
+runs_dir: results/3rscan         # run outputs (<runs_dir>/<timestamp>/filter/, refine_<timestamp>/)

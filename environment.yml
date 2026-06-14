@@ -1,0 +1,14 @@
+# Conda environment for SG2Loc (preprocessing, particle filter and refinement).
+#
+#   conda env create -f environment.yml
+#   conda activate sg2loc
+#   pip install torch==2.12.1+cu129 torchvision==0.27.1+cu129 \
+#       --index-url https://download.pytorch.org/whl/cu129
+#   pip install -r requirements.txt
+name: sg2loc
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
